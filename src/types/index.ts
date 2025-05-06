@@ -1,127 +1,96 @@
-// Типов данных
-
-export type Product = {
+export interface IProduct {
 	id: number;
-	category: string;
 	description: string;
-	name: string;
-	price: number;
-	currency: string;
 	image: string;
-};
+	title: string;
+	category: string;
+	price: number | null;
+}
 
-export type ProductList = Product[];
-
-export type CartItem = {
-	id: number;
-	order: number;
-	name: string;
-	price: number;
-	currency: string;
-};
-
-export type PaymentMethod = 'online' | 'on-receive';
-
-export type OrderInfo = {
+export interface IUserInfo {
 	paymentMethod: PaymentMethod;
 	address: string;
 	email: string;
 	phone: string;
-};
-
-export type OrderResult = {
-	price: number;
-	currency: string;
-};
-
-export type ButtonOptions = {
-	text?: string;
-	icon?: string;
-	onClick: () => void;
-	type?: 'primary' | 'secondary' | 'icon';
-	disabled?: boolean;
-};
-
-export type FormItemOptions = {
-	label: string;
-	name: string;
-	type: 'text' | 'email' | 'tel';
-	error?: string;
-};
-
-// Интерфейс API-клиента
-
-export interface IApiClient {
-	getProductList(): Promise<Product[]>;
-	sendOrder(data: OrderInfo): Promise<OrderResult>;
 }
 
-// Интерфейсы модели данных
-
-export interface ICartModel {
-	addProduct(product: Product): void;
-	removeProduct(id: number): void;
-	getItems(): CartItem[];
-	clear(): void;
+export interface IOrderResult {
+	id: string;
+	total: number;
 }
 
-export interface IOrderModel {
-	setOrderInfo(data: OrderInfo): void;
-	getOrderInfo(): OrderInfo;
-	clear(): void;
+export interface ICartData {
+  items: TCartItem[];
+  total: number;
+}
+
+export interface IOrderData {
+  items: TCartItem[];
+  deliveryInfo: TDeliveryInfo;
+  contactInfo: TContactInfo;
+}
+
+export interface IProductError {
+  error: string;
+}
+
+export interface IOrderError {
+	error: TOrderError;
 }
 
 export interface IProductModel {
-	setProductList(products: ProductList): void;
-	getProductList(): ProductList;
-	getProductById(id: number): Product | undefined;
+  setProductList(products: IProduct[]): void;
+  getProductList(): IProduct[];
+  getProductById(id: number): IProduct | undefined;
 }
 
-// Интерфейсы отображений
-
-export interface ICartView {
-	renderCart(items: CartItem[]): void;
-	onRemove(handler: (id: number) => void): void;
+export interface ICartModel {
+  addProduct(product: IProduct): void;
+  removeProduct(id: number): void;
+  getItems(): TCartItem[];
+	getTotalCount(): number;
+  hasProduct(id: number): boolean;
+  clear(): void;
 }
 
-export interface ICheckoutView {
-	renderStep1(): void;
-	renderStep2(): void;
-	getFormData(): OrderInfo;
-	onSubmit(handler: (data: OrderInfo) => void): void;
+export interface IOrderModel {
+  setDeliveryInfo(data: TDeliveryInfo): void;
+  setContactInfo(data: TContactInfo): void;
+  getOrderInfo(): IUserInfo;
+	checkValidation(): Record<TOrderStep, boolean>;
+  clear(): void;
 }
 
-export interface IModalView {
-	open(): void;
-	close(): void;
-	renderContent(content: Element): void;
-	onClose(handler: () => void): void;
+export interface IComponent<T> {
+  render(data: Partial<T>): HTMLElement;
 }
 
-export interface IProductDetailView {
-	render(product: Product): void;
-	onAddToCart(handler: (productId: number) => void): void;
+export interface IEvents {
+  on<T extends object>(event: string, callback: (data: T) => void): void;
+  emit<T extends object>(event: string, data?: T): void;
+  trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void;
+} 
+
+export interface IApiClient {
+	getProductList(): Promise<IProduct[]>;
+	sendOrder(data: IUserInfo): Promise<IOrderResult>;
 }
 
-export interface IProductsView {
-	renderProductList(products: ProductList): void;
-	onCardClick(handler: (id: number) => void): void;
-}
+// Типы данных
 
-// Интерфейсы базовых классов
+export type TProductCard = Pick<IProduct, 'image' | 'title' | 'category' | 'price'>
+ 
+export type TCartItem = Pick<IProduct, 'id' | 'title' | 'price'> & {
+  order: number;
+};
 
-export interface ICartPresenter {
-  init(): void;
-  handleRemove(id: number): void;
-}
+export type PaymentMethod = 'online' | 'on-receive';
 
-export interface ICheckoutPresenter {
-  init(): void;
-  handleSubmit(data: OrderInfo): void;
-}
+export type TDeliveryInfo = Pick<IUserInfo, 'paymentMethod' | 'address' >
 
-export interface IProductPresenter {
-  init(): void;
-  handleCardClick(id: number): void;
-  handleAddToCart(id: number): void;
-}
+export type TContactInfo = Pick<IUserInfo, 'email' | 'phone' >
+
+export type TOrderStep = 'deliveryInfo' | 'contactInfo' | 'finalCheck';
+
+export type TOrderError = "WrongTotal" | "WrongAddress" | "ProductNotFound";
+
