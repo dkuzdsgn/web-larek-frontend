@@ -74,7 +74,7 @@ export interface IProduct {
 **Данные пользователя**
 ```
 export interface IUserInfo {
-  paymentMethod: PaymentMethod;
+  payment: PaymentMethod;
   address: string;
   email: string;
   phone: string;
@@ -87,7 +87,13 @@ export interface IOrderResult {
   total: number;
 }
 ```
-
+**Интерфейс для описания типа заказа**
+```
+interface IOrder extends IUserInfo { 
+    items: string[]; 
+    total: number;
+}
+```
 **Интерфейс для модели данных корзины**
 ```
 export interface ICartData {
@@ -96,17 +102,9 @@ export interface ICartData {
 }
 ```
 
-**Интерфейс данных о заказе для отправки на сервер**
-```
-export interface IOrderData {
-  items: TCartItem[];
-  deliveryInfo: TDeliveryInfo;
-  contactInfo: TContactInfo;
-}
-```
 **Данные о продукте, используемые в карточке продукта**
 ```
-export type TProductCard = Pick<IProduct, 'image' | 'title' | 'category' | 'price'>
+export type TProductCard = Omit<IProduct, 'description'>;
 ```
  
 **Данные о продукте, используемые в корзине**
@@ -293,7 +291,7 @@ render(data?: Partial<T>): HTMLElement
 
 **Методы класса:**
 
-- `setProductList(products: IProduct[]): void` — сохраняет список продуктов.
+- `set products(products: IProduct[])` — сохраняет список продуктов.
 - `getProductList(): IProduct[]` — возвращает весь список продуктов.
 - `getProductById(id: number): IProduct | undefined` — возвращает продукт по ID или undefined, если не найден.
 
@@ -315,6 +313,7 @@ render(data?: Partial<T>): HTMLElement
 - `getTotalCount(): number` — возвращает общее количество товаров.
 - `hasProduct(id: number): boolean` — проверяет наличие товара в корзине.
 - `clear(): void` — очищает корзину.
+- `getCart(): ICartData` — возвращает данные о заказе.
 
 #### Класс OrderModel
 
@@ -371,8 +370,7 @@ render(data?: Partial<T>): HTMLElement
 - `render(data: IProduct[]): HTMLElement` - рендер карточек
 
 #### Класс ProductPreviewView
-**Наследуется от:** ModalView\
-Класс модального окна с подробной информацией о товаре. Используется для показа описания, изображения, категории, названия и кнопки «В корзину» перед оформлением покупки.
+Класс карточки с подробной информацией о товаре. Используется для показа описания, изображения, категории, названия и кнопки «В корзину» перед оформлением покупки.
 
 **Поля класса:**
 
@@ -389,7 +387,7 @@ render(data?: Partial<T>): HTMLElement
 - `render(data: IProduct): HTMLElement` — отображает данные о товаре
 - `setAddHandler(handler: () => void): void` — задаёт обработчик кнопки
 
-#### Класс ModalView 
+#### Класс Modal
 **Наследуется от:** `abstract class Component<T>`\
 Базовый компонент для модальных окон. Управляет открытием и закрытием модального окна, содержит кнопку закрытия. Используется как родительский класс для всех модальных компонентов.
 - `constructor(selector: string, events: IEvents)` Конструктор принимает селектор, по которому в разметке страницы будет идентифицировано модальное окно и экземпляр класса `EventEmitter` для возможности инициации событий.
@@ -404,11 +402,32 @@ render(data?: Partial<T>): HTMLElement
 
 - `open(): void` — делает модальное окно видимым
 - `close(): void` — скрывает модальное окно
+-	`setContent(content: HTMLElement): void` - устанавливает контент в модальном окне
 
-#### Класс ModalOrderView
+#### Класс Form
+**Наследуется от:** `abstract class Component<T>`\
+Базовый компонент для работы с формами. Реализует автоматическую валидацию, отправку формы и отображение ошибок. Используется как родительский класс для FormOrder, FormContacts и FormSuccess
 
-**Наследуется от:** ModalView\
-Модальное окно, отображающее первый шаг оформления заказа: выбор способа оплаты и ввод адреса доставки.
+- `constructor(container: HTMLFormElement, events: IEvents)` Конструктор инициализирующий форму и экземпляр класса `EventEmitter` для возможности инициации событий.
+
+**Поля класса:**
+
+- `container: HTMLFormElement` — HTML-элемент формы
+- `_submit: HTMLButtonElement` — кнопка отправки формы
+- `_errors: HTMLElement` — контейнер для отображения текстовых ошибок
+- `events: IEvents` - брокер событий
+
+**Методы:**
+
+- `validateForm(): boolean` - Выполняет встроенную валидацию всех <input> в форме. Учитывает required, pattern, tooShort, а также кастомные сообщения через data-* атрибуты.
+- `set valid(value: boolean)` - Управляет состоянием доступности кнопки отправки (disabled).
+- `set errors(value: string)` - Устанавливает текст ошибки в _errors.
+- `render(state: Partial<T> & IFormState): HTMLElement` - Обновляет внутреннее состояние формы и перерисовывает поля на основе полученных данных.
+
+#### Класс FormOrder
+
+**Наследуется от:** `Form`\
+Отображает первый шаг оформления заказа: выбор способа оплаты и ввод адреса доставки.
 
 **Поля класса:**
 
@@ -427,10 +446,10 @@ render(data?: Partial<T>): HTMLElement
 - `setDisabled(state: boolean): void` — блокирует/разблокирует кнопку отправки
 - `setChangeHandler(handler: () => void): void` — обработчик изменения полей
 
-#### Класс ModalContactView
+#### Класс FormContacts
 
-**Наследуется от:** ModalView\
-Модальное окно второго шага оформления заказа — контактная информация: email и телефон.
+**Наследуется от:** `Form`\
+Отображает второй шаг оформления заказа — контактная информация: email и телефон.
 
 **Поля класса:**
 
@@ -448,9 +467,9 @@ render(data?: Partial<T>): HTMLElement
 - `setDisabled(state: boolean): void` — активирует/деактивирует кнопку
 - `setChangeHandler(handler: () => void): void` — обработчик изменения
 
-#### Класс ModalSuccessView
-**Наследуется от:** ModalView\
-Финальное окно, отображающееся после успешного оформления заказа.
+#### Класс FormSuccess
+**Наследуется от:** `Form`\
+Отображает информацию об успешном оформлении заказа.
 
 **Поля класса:**
 
@@ -461,7 +480,7 @@ render(data?: Partial<T>): HTMLElement
 
 **Методы:**
 
-- `render(data: IOrderResult): void` — подставляет сумму и ID заказа
+- `render(data: IOrder): void` — подставляет сумму и ID заказа
 - `setCloseHandler(handler: () => void): void` — обработчик кнопки закрытия
 
 #### Класс CartView
@@ -508,7 +527,7 @@ render(data?: Partial<T>): HTMLElement
 **Методы:**
 
 - `getProductList(): Promise<IProduct[]>` — получает список всех продуктов
-- `sendOrder(data: IOrderData): Promise<IOrderResult>` — отправляет заказ и получает результат
+- `sendOrder(data: IOrder): Promise<IOrderResult>` — отправляет заказ и получает результат
 
 ## Взаимодействие компонентов
 
