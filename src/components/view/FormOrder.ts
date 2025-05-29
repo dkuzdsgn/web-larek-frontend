@@ -121,7 +121,8 @@ export class FormOrder extends Form<TDeliveryInfo> {
 	}
 
 	setSubmitHandler(): void {
-		this.submitButton.addEventListener('click', () => {
+		this.submitButton.addEventListener('click', (e) => {
+			e.preventDefault();
 			if (this.validateForm()) {
 				this.events.emit('order-delivery:submit');
 			}
