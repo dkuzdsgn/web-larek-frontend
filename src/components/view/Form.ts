@@ -47,19 +47,20 @@ export class Form<T> extends Component<IFormState> {
 				input.setCustomValidity(input.dataset.errorLengthMessage);
 			}
 			if (!input.validity.valid) {
-				this._errors.textContent = input.validationMessage;
-				this._submit.disabled = true;
+				this.setText(this._errors, input.validationMessage);
+				this.setDisabled(this._submit, true);
 				return false;
 			}
 		}
 
-		this._errors.textContent = '';
-		this._submit.disabled = false;
+		this.setText(this._errors, '');
+		this.setDisabled(this._submit, false);
+
 		return true;
 	}
 
 	set valid(value: boolean) {
-		this._submit.disabled = !value;
+		this.setDisabled(this._submit, !value);
 	}
 
 	set errors(value: string) {

@@ -15,43 +15,26 @@ import { CartView } from './components/view/CartView';
 import { FormOrder } from './components/view/FormOrder';
 import { FormContacts } from './components/view/FormContacts';
 import { FormSuccess } from './components/view/FormSuccess';
+import { ensureElement } from './utils/utils';
+import { Page } from './components/view/Page';
 
 const events: IEvents = new EventEmitter();
 const baseApi: IApiClient = new Api(API_URL, settings);
 const api: WebLarekApi = new WebLarekApi(baseApi);
 
-const modalContainer = document.querySelector(
-	'#modal-container'
-) as HTMLElement;
+const modalContainer = ensureElement<HTMLElement>('#modal-container');
+const gallery = ensureElement<HTMLElement>('.gallery');
 
-const gallery = document.querySelector('.gallery') as HTMLElement;
+const productCardTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
+const productPreviewTemplate =
+	ensureElement<HTMLTemplateElement>('#card-preview');
+const cartViewTemplate = ensureElement<HTMLTemplateElement>('#basket');
+const orderFormTemplate = ensureElement<HTMLTemplateElement>('#order');
+const contactFormTemplate = ensureElement<HTMLTemplateElement>('#contacts');
+const successFormTemplate = ensureElement<HTMLTemplateElement>('#success');
+const productRowTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 
-const cartButton = document.querySelector(
-	'.header__basket'
-) as HTMLButtonElement;
-
-const productCardTemplate: HTMLTemplateElement = document.querySelector(
-	'#card-catalog'
-) as HTMLTemplateElement;
-
-const productPreviewTemplate: HTMLTemplateElement = document.querySelector(
-	'#card-preview'
-) as HTMLTemplateElement;
-
-const cartViewTemplate: HTMLTemplateElement = document.querySelector(
-	'#basket'
-) as HTMLTemplateElement;
-
-const orderFormTemplate: HTMLTemplateElement = document.querySelector(
-	'#order'
-) as HTMLTemplateElement;
-const contactFormTemplate: HTMLTemplateElement = document.querySelector(
-	'#contacts'
-) as HTMLTemplateElement;
-const successFormTemplate: HTMLTemplateElement = document.querySelector(
-	'#success'
-) as HTMLTemplateElement;
-
+const page = new Page(document.body, events, () => cartModel.getCart());
 const productsModel = new ProductModel(events);
 const cartModel: CartModel = new CartModel(events);
 const modal: Modal<ICartData> = new Modal(modalContainer, events);
@@ -88,7 +71,7 @@ events.on('product:select', (product: IProduct) => {
 });
 
 events.on('cart:open', (cart: ICartData) => {
-	const cartOpen = new CartView(cartViewTemplate, events);
+	const cartOpen = new CartView(cartViewTemplate, events, productRowTemplate);
 	cartOpen.setData(cart);
 	cartOpen.setSubmitHandler();
 
@@ -96,27 +79,16 @@ events.on('cart:open', (cart: ICartData) => {
 	modal.setContent(cartElement);
 });
 
-cartButton.addEventListener('click', () => {
-	events.emit('cart:open', cartModel.getCart());
-});
-
 events.on('product:add', (product: IProduct) => {
 	cartModel.addProduct(product);
 });
-
-function updateCartCounter(count: number): void {
-	const counter = document.querySelector('.header__basket-counter');
-	if (counter) {
-		counter.textContent = String(count);
-	}
-}
 
 events.on('product:remove', (data: { id: string }) => {
 	cartModel.removeProduct(data.id);
 });
 
 events.on('cart:changed', (items: TCartItem[]) => {
-	updateCartCounter(items.length);
+	page.counter = items.length;
 	if (modalContainer.querySelector('.basket')) {
 		events.emit('cart:open', cartModel.getCart());
 	}
@@ -125,16 +97,11 @@ events.on('cart:changed', (items: TCartItem[]) => {
 events.on('cart:submit', () => {
 	const orderElement = orderForm.render();
 	modal.setContent(orderElement);
-	orderForm.setSubmitHandler();
 });
-
-orderForm.setChangeHandler();
 
 events.on('order-delivery:submit', () => {
 	const contactElement = contactForm.render();
 	modal.setContent(contactElement);
-	contactForm.setChangeHandler();
-	contactForm.setSubmitHandler();
 });
 
 events.on('order-contact:submit', () => {
@@ -145,16 +112,23 @@ events.on('order-contact:submit', () => {
 		total: cartModel.getCart().total,
 	};
 
+	page.locked = true;
+
 	api
 		.sendOrder(orderData)
 		.then((result) => {
 			cartModel.clear();
+			orderForm.reset();
+			contactForm.reset();
 			successForm.setData(result);
 			const successElement = successForm.render();
 			modal.setContent(successElement);
 		})
 		.catch((error) => {
 			console.error('Ошибка при отправке заказа:', error);
+		})
+		.finally(() => {
+			page.locked = false;
 		});
 });
 

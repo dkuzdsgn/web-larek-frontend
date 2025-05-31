@@ -1,3 +1,4 @@
+import { ensureElement } from '../../utils/utils';
 import { Component } from '../base/Component';
 import { IEvents } from '../base/Events';
 
@@ -9,7 +10,10 @@ export class Modal<T> extends Component<T> {
 		super(container);
 		this.events = events;
 
-		const modalClose = this.container.querySelector('.modal__close');
+		const modalClose = ensureElement<HTMLElement>(
+			'.modal__close',
+			this.container
+		);
 
 		modalClose.addEventListener('click', this.close.bind(this));
 
@@ -22,12 +26,12 @@ export class Modal<T> extends Component<T> {
 	}
 
 	open() {
-		this.container.classList.add('modal_active');
+		this.toggleClass(this.container, 'modal_active', true);
 		document.addEventListener('keyup', this.handleEscUp);
 	}
 
 	close() {
-		this.container.classList.remove('modal_active');
+		this.toggleClass(this.container, 'modal_active', false);
 		document.removeEventListener('keyup', this.handleEscUp);
 	}
 
@@ -38,7 +42,11 @@ export class Modal<T> extends Component<T> {
 	}
 
 	setContent(content: HTMLElement): void {
-		this.container.querySelector('.modal__content')?.replaceChildren(content);
+		const contentContainer = ensureElement<HTMLElement>(
+			'.modal__content',
+			this.container
+		);
+		contentContainer.replaceChildren(content);
 		this.open();
 	}
 }

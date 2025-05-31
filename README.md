@@ -337,6 +337,22 @@ render(data?: Partial<T>): HTMLElement
 
 Все классы слоя представления отвечают за отображение внутри контейнера (DOM-элемент) передаваемых в них данных.
 
+#### Класс Page
+**Наследуется от:** `abstract class Component<T>`\
+Компонент, отвечающий за отображение счётчика корзины, блокировку страницы во время заказа, а также обработка клика по кнопке корзины.
+
+**Поля класса:**
+
+- `counterElement: HTMLElement` — элемент, отображающий количество товаров в корзине
+- `wrapperElement: HTMLElement` — обёртка страницы, используется для визуальной блокировки интерфейса
+- `basketButton: HTMLButtonElement` — кнопка открытия корзины
+- `events: IEvents` — брокер событий
+- `getCart: () => ICartData` — функция, возвращающая текущее содержимое корзины
+
+**Методы:**
+
+- `set counter(value: number): void` - обновляет текст внутри элемента счётчика корзины
+- `set locked(value: boolean): void` - добавляет или удаляет CSS-класс page__wrapper_locked для блокировки интерфейса
 
 #### Класс ProductCardView 
 **Наследуется от:** `abstract class Component<T>`\
@@ -344,12 +360,12 @@ render(data?: Partial<T>): HTMLElement
 
 **Поля класса:**
 
-- `container`: HTMLElement — корневой элемент карточки
-- `category`: HTMLElement — категория товара 
-- `title`: HTMLElement — название товара
-- `image`: HTMLImageElement — изображение товара
-- `price`: HTMLElement — отображает цену
-- `events`: IEvents — брокер событий
+- `container: HTMLElement` — корневой элемент карточки
+- `category: HTMLElement` — категория товара 
+- `title: HTMLElement` — название товара
+- `image: HTMLImageElement` — изображение товара
+- `price: HTMLElement` — отображает цену
+- `events: IEvents` — брокер событий
 
 **Методы:**
 

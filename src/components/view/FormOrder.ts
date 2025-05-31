@@ -1,5 +1,5 @@
 import { TDeliveryInfo, PaymentMethod } from '../../types';
-import { cloneTemplate } from '../../utils/utils';
+import { cloneTemplate, ensureElement } from '../../utils/utils';
 import { IEvents } from '../base/Events';
 import { Form } from './Form';
 
@@ -22,35 +22,36 @@ export class FormOrder extends Form<TDeliveryInfo> {
 		this.element = form;
 		this.events = events;
 
-		this.cardButton = form.querySelector('button[name="card"]')!;
-		this.cashButton = form.querySelector('button[name="cash"]')!;
-		this.addressInput = form.elements.namedItem('address') as HTMLInputElement;
-		this.submitButton = form.querySelector('.order__button')!;
-		this.errorText = form.querySelector('.form__errors')!;
+		this.cardButton = ensureElement<HTMLButtonElement>(
+			'button[name="card"]',
+			form
+		);
+		this.cashButton = ensureElement<HTMLButtonElement>(
+			'button[name="cash"]',
+			form
+		);
+		this.addressInput = ensureElement<HTMLInputElement>(
+			'input[name="address"]',
+			form
+		);
+		this.submitButton = ensureElement<HTMLButtonElement>(
+			'.order__button',
+			form
+		);
+		this.errorText = ensureElement<HTMLElement>('.form__errors', form);
 
-		this.cardButton.addEventListener('click', () => {
-			this.selectedPayment = 'online';
-			this.updatePaymentSelection();
-			this.changeHandler?.();
-		});
-
-		this.cashButton.addEventListener('click', () => {
-			this.selectedPayment = 'on-receive';
-			this.updatePaymentSelection();
-			this.changeHandler?.();
-		});
-
-		this.addressInput.addEventListener('input', () => {
-			this.changeHandler?.();
-		});
+		this.setSubmitHandler();
+		this.setChangeHandler();
 	}
 
 	private updatePaymentSelection() {
-		this.cardButton.classList.toggle(
+		this.toggleClass(
+			this.cardButton,
 			'button_alt-active',
 			this.selectedPayment === 'online'
 		);
-		this.cashButton.classList.toggle(
+		this.toggleClass(
+			this.cashButton,
 			'button_alt-active',
 			this.selectedPayment === 'on-receive'
 		);
@@ -83,20 +84,21 @@ export class FormOrder extends Form<TDeliveryInfo> {
 		};
 	}
 
-	setDisabled(element: HTMLButtonElement, state: boolean): void {
-		element.disabled = state;
-	}
-
 	setChangeHandler(): void {
 		this.addressInput.addEventListener('input', () => {
 			this.validateForm();
 		});
 
-		[this.cardButton, this.cashButton].forEach((btn) => {
-			btn.addEventListener('click', () => {
-				this.updatePaymentSelection();
-				this.validateForm();
-			});
+		this.cardButton.addEventListener('click', () => {
+			this.selectedPayment = 'online';
+			this.updatePaymentSelection();
+			this.validateForm();
+		});
+
+		this.cashButton.addEventListener('click', () => {
+			this.selectedPayment = 'on-receive';
+			this.updatePaymentSelection();
+			this.validateForm();
 		});
 	}
 
@@ -105,28 +107,35 @@ export class FormOrder extends Form<TDeliveryInfo> {
 		const isPaymentValid = this.selectedPayment !== null;
 
 		if (!isValidInputs) {
-			this._submit.disabled = true;
+			this.setDisabled(this._submit, true);
 			return false;
 		}
 
 		if (!isPaymentValid) {
-			this._errors.textContent = 'Выберите способ оплаты';
-			this._submit.disabled = true;
+			this.setText(this._errors, 'Выберите способ оплаты');
+			this.setDisabled(this._submit, true);
 			return false;
 		}
-
-		this._errors.textContent = '';
-		this._submit.disabled = false;
+		this.setText(this._errors, '');
+		this.setDisabled(this._submit, false);
 		return true;
 	}
 
-	setSubmitHandler(): void {
+	private setSubmitHandler(): void {
 		this.submitButton.addEventListener('click', (e) => {
 			e.preventDefault();
 			if (this.validateForm()) {
 				this.events.emit('order-delivery:submit');
 			}
 		});
+	}
+
+	reset(): void {
+		this.addressInput.value = '';
+		this.selectedPayment = null;
+		this.updatePaymentSelection();
+		this.setText(this.errorText, '');
+		this.setDisabled(this.submitButton, true);
 	}
 
 	render(): HTMLFormElement {

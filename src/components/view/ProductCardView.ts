@@ -1,27 +1,10 @@
-// #### Класс ProductCardView
-// **Наследуется от:** `abstract class Component<T>`\
-// Отображает карточку товара в каталоге. При клике открывает модальное окно `ProductPreviewView` с подробной информацией о товаре.
-
-// **Поля класса:**
-
-// - `container`: HTMLButtonElement — корневой элемент карточки и кнопка, при нажатии которой, открывается превью товара
-// - `category`: HTMLElement — категория товара
-// - `title`: HTMLElement — название товара
-// - `image`: HTMLImageElement — изображение товара
-// - `price`: HTMLElement — отображает цену
-// - `events`: IEvents — брокер событий
-
-// **Методы:**
-
-// - `render(data: TProductCard): HTMLElement` - Заполняет карточку данными о товаре
-// - `setClickHandler(handler: () => void): void` - Назначает обработчик на клик по карточке. Используется для открытия ProductPreviewView с полной информацией о товаре.
-
 import { IProduct, TProductCard } from '../../types';
 import { CDN_URL } from '../../utils/constants';
-import { cloneTemplate } from '../../utils/utils';
+import { cloneTemplate, ensureElement } from '../../utils/utils';
+import { Component } from '../base/Component';
 import { IEvents } from '../base/Events';
 
-export class ProductCardView {
+export class ProductCardView extends Component<TProductCard> {
 	protected element: HTMLElement;
 	protected events: IEvents;
 	protected container: HTMLButtonElement;
@@ -32,24 +15,29 @@ export class ProductCardView {
 	protected productId: string;
 
 	constructor(template: HTMLTemplateElement, events: IEvents) {
+		const element = cloneTemplate(template);
+		super(element);
+
 		this.events = events;
-		this.element = cloneTemplate(template);
+		this.element = element;
 
 		this.container = this.element as HTMLButtonElement;
-
-		this.category = this.element.querySelector('.card__category');
-		this.title = this.element.querySelector('.card__title');
-		this.image = this.element.querySelector('.card__image');
-		this.price = this.element.querySelector('.card__price');
+		this.category = ensureElement<HTMLElement>('.card__category', this.element);
+		this.title = ensureElement<HTMLElement>('.card__title', this.element);
+		this.image = ensureElement<HTMLImageElement>('.card__image', this.element);
+		this.price = ensureElement<HTMLElement>('.card__price', this.element);
 	}
 
 	setData(data: TProductCard) {
 		this.productId = data.id;
 		this.image.src = `${CDN_URL}${data.image}`;
 		this.image.alt = data.title;
-		this.title.textContent = data.title;
-		this.category.textContent = data.category;
-		this.price.textContent = data.price ? `${data.price} синапсов` : `Бесценно`;
+		this.setText(this.title, data.title);
+		this.setText(this.category, data.category);
+		this.setText(
+			this.price,
+			data.price ? `${data.price} синапсов` : `Бесценно`
+		);
 
 		const categoryMap: Record<string, string> = {
 			'софт-скил': '_soft',
@@ -63,7 +51,7 @@ export class ProductCardView {
 		const modifier = categoryMap[key];
 
 		if (modifier) {
-			this.category.classList.add(`card__category${modifier}`);
+			this.toggleClass(this.category, `card__category${modifier}`, true);
 		}
 	}
 
@@ -75,9 +63,5 @@ export class ProductCardView {
 
 	get id() {
 		return this.productId;
-	}
-
-	render() {
-		return this.element;
 	}
 }

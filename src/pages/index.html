@@ -219,7 +219,7 @@
 					alt=""
 				/>
 				<div class="card__column">
-					<span class="card__category card__category_other">другое</span>
+					<span class="card__category">другое</span>
 					<h2 class="card__title">Бэкенд-антистресс</h2>
 					<p class="card__text">
 						Если планируете решать задачи в тренажёре, берите два.
@@ -277,10 +277,10 @@
 							type="text"
 							placeholder="Введите адрес"
 							required
-							pattern="^[А-Яа-яЁё0-9 ,]+$"
+							pattern="^[А-Яа-яЁё0-9 .,\/\-]+$"
 							minlength="10"
 							data-error-message="Введите адрес"
-							data-error-rules-message="Разрешены только кириллические буквы, цифры, запятые и пробелы."
+							data-error-rules-message="Адрес может содержать кириллические буквы, цифры, пробелы и знаки: точка, запятая, тире, слеш."
 							data-error-length-message="Минимальное количество символов: 10"
 						/>
 					</label>

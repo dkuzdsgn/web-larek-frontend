@@ -1,8 +1,9 @@
 import { IOrderResult } from '../../types';
-import { cloneTemplate } from '../../utils/utils';
+import { cloneTemplate, ensureElement } from '../../utils/utils';
+import { Component } from '../base/Component';
 import { IEvents } from '../base/Events';
 
-export class FormSuccess {
+export class FormSuccess extends Component<IOrderResult> {
 	protected element: HTMLElement;
 	protected events: IEvents;
 
@@ -12,21 +13,32 @@ export class FormSuccess {
 	protected closeButton: HTMLButtonElement;
 
 	constructor(template: HTMLTemplateElement, events: IEvents) {
+		const element = cloneTemplate(template);
+		super(element);
+
+		this.element = element;
 		this.events = events;
-		this.element = cloneTemplate(template);
 		this.container = this.element as HTMLElement;
-		this.title = this.element.querySelector('.order-success__title');
-		this.description = this.element.querySelector(
-			'.order-success__description'
+
+		this.title = ensureElement<HTMLElement>(
+			'.order-success__title',
+			this.element
 		);
-		this.closeButton = this.element.querySelector('.order-success__close');
+		this.description = ensureElement<HTMLElement>(
+			'.order-success__description',
+			this.element
+		);
+		this.closeButton = ensureElement<HTMLButtonElement>(
+			'.order-success__close',
+			this.element
+		);
 
 		this.closeButton.addEventListener('click', () => {
 			this.events.emit('modal:close');
 		});
 	}
 	setData(data: IOrderResult) {
-		this.description.textContent = `Списано ${data.total} синапсов`;
+		this.setText(this.description, `Списано ${data.total} синапсов`);
 	}
 
 	setCloseHandler(): void {

@@ -1,5 +1,5 @@
 import { TContactInfo } from '../../types';
-import { cloneTemplate } from '../../utils/utils';
+import { cloneTemplate, ensureElement } from '../../utils/utils';
 import { IEvents } from '../base/Events';
 import { Form } from './Form';
 
@@ -18,10 +18,22 @@ export class FormContacts extends Form<TContactInfo> {
 		this.element = form;
 		this.events = events;
 
-		this.emailInput = form.querySelector('input[name="email"]');
-		this.phoneInput = form.querySelector('input[name="phone"]');
-		this.submitButton = form.querySelector('button[type="submit"]');
-		this.errorText = form.querySelector('.form__errors')!;
+		this.emailInput = ensureElement<HTMLInputElement>(
+			'input[name="email"]',
+			form
+		);
+		this.phoneInput = ensureElement<HTMLInputElement>(
+			'input[name="phone"]',
+			form
+		);
+		this.submitButton = ensureElement<HTMLButtonElement>(
+			'button[type="submit"]',
+			form
+		);
+		this.errorText = ensureElement<HTMLElement>('.form__errors', form);
+
+		this.setChangeHandler();
+		this.setSubmitHandler();
 	}
 
 	set email(value: string) {
@@ -41,10 +53,6 @@ export class FormContacts extends Form<TContactInfo> {
 		};
 	}
 
-	setDisabled(element: HTMLButtonElement, state: boolean): void {
-		element.disabled = state;
-	}
-
 	setChangeHandler(): void {
 		const handler: () => void = () => {
 			const isEmailFilled = this.emailInput.value.trim() !== '';
@@ -57,12 +65,21 @@ export class FormContacts extends Form<TContactInfo> {
 		this.phoneInput.addEventListener('input', handler);
 	}
 
-	setSubmitHandler(): void {
-		this.submitButton.addEventListener('click', () => {
-			this.events.emit('order-contact:submit');
+	private setSubmitHandler(): void {
+		this.submitButton.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (this.validateForm()) {
+				this.events.emit('order-contact:submit');
+			}
 		});
 	}
 
+	reset(): void {
+		this.emailInput.value = '';
+		this.phoneInput.value = '';
+		this.setText(this.errorText, '');
+		this.setDisabled(this.submitButton, true);
+	}
 	render() {
 		return this.container;
 	}
